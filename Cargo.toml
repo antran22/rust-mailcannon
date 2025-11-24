@@ -1,0 +1,16 @@
+[package]
+name = "mailcannon"
+version = "0.1.0"
+edition = "2024"
+
+[dependencies]
+actix-web = "4.12.0"
+reqwest = "0.12.24"
+tokio = { version = "1.48.0", features = ["rt-multi-thread", "macros"] }
+
+[lib]
+path = "src/lib.rs"
+
+[[bin]]
+path = "src/main.rs"
+name = "zero2prod"
