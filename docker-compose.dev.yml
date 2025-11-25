@@ -1,0 +1,13 @@
+services:
+  database:
+    image: "postgres:latest"
+    ports:
+      - $POSTGRES_PORT:$POSTGRES_PORT
+
+    env_file:
+      - .env
+    volumes:
+      - data:/var/lib/postgresql
+
+volumes:
+  data:

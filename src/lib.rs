@@ -2,6 +2,8 @@ use std::net::TcpListener;
 
 use actix_web::{App, HttpRequest, HttpResponse, HttpServer, Responder, dev::Server, web};
 
+mod routes;
+
 async fn greet(req: HttpRequest) -> impl Responder {
     let name = req.match_info().get("name").unwrap_or("World");
     format!("Hello {}!", &name)
@@ -16,6 +18,10 @@ pub fn make_server(listener: TcpListener) -> Result<Server, std::io::Error> {
         App::new()
             .route("/", web::get().to(greet))
             .route("/health_check", web::get().to(health_check))
+            .route(
+                "/subscriptions",
+                web::post().to(routes::subscriptions::create_subscription),
+            )
     })
     .listen(listener)?
     .run();
