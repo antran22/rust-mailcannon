@@ -6,6 +6,6 @@ pub struct CreateSubscriptionData {
     email: String,
 }
 
-pub async fn create_subscription(form: web::Form<CreateSubscriptionData>) -> impl Responder {
+pub async fn create(form: web::Form<CreateSubscriptionData>) -> impl Responder {
     format!("Hello {}, {}", form.name, form.email)
 }

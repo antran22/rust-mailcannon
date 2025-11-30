@@ -1,4 +1,4 @@
-mod common;
+pub mod common;
 
 #[tokio::test]
 async fn health_check_works() {

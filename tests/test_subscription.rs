@@ -1,10 +1,11 @@
-mod common;
+pub mod common;
 
 #[tokio::test]
 async fn subscribe_returns_a_200_for_valid_form_data() {
     // Arrange
     let addr = common::spawn_app();
     let client = reqwest::Client::new();
+    let mut db = common::get_database().await;
 
     // Act
     let url = format!("{}/subscriptions", addr);
@@ -18,6 +19,11 @@ async fn subscribe_returns_a_200_for_valid_form_data() {
         .expect("Failed to execute request.");
 
     // Assert
+    let saved = sqlx::query!("SELECT email, name from subscriptions",)
+        .fetch_one(&mut db)
+        .await
+        .expect("cannot get a saved subscription");
+
     assert_eq!(200, response.status().as_u16());
 }
 
@@ -33,7 +39,6 @@ async fn subscribe_returns_a_400_when_invalid_form_data() {
     ];
 
     // Act
-    //
     for (invalid_body, error_message) in test_cases {
         let url = format!("{}/subscriptions", addr);
         let response = client

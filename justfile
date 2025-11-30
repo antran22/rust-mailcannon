@@ -10,8 +10,17 @@ postgres_db := env("POSTGRES_DB")
 export DATABASE_URL := "postgres://" + postgres_user + ":" + postgres_password + "@" + postgres_host + ":" + postgres_port + "/" + postgres_db
 
 
-watch-dev:
-  cargo watch -x check -x test -x run
+start:
+  cargo run
+
+start-watch:
+  bacon run
+
+test-watch:
+  bacon test
+
+test-coverage:
+  cargo tarpaulin --verbose --workspace 
 
 dev-dep-start:
   docker compose -f docker-compose.dev.yml up -d
@@ -31,3 +40,10 @@ create-db:
 migration +args:
   sqlx migrate {{args}}
 
+db-schema-update: _db-schema-update-code _db-schema-update-test
+
+_db-schema-update-code:
+  cargo sqlx prepare
+
+_db-schema-update-test:
+  cargo sqlx prepare -- --tests
