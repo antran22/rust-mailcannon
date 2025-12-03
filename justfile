@@ -16,6 +16,9 @@ start:
 start-watch:
   bacon run
 
+test:
+  cargo test
+
 test-watch:
   bacon test
 

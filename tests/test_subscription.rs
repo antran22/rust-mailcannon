@@ -3,12 +3,11 @@ pub mod common;
 #[tokio::test]
 async fn subscribe_returns_a_200_for_valid_form_data() {
     // Arrange
-    let addr = common::spawn_app();
+    let app = common::spawn_app().await;
     let client = reqwest::Client::new();
-    let mut db = common::get_database().await;
 
     // Act
-    let url = format!("{}/subscriptions", addr);
+    let url = format!("{}/subscriptions", &app.address);
     let body = "name=le&20guin&email=ursula_le_guin%40gmail.com";
     let response = client
         .post(&url)
@@ -19,8 +18,8 @@ async fn subscribe_returns_a_200_for_valid_form_data() {
         .expect("Failed to execute request.");
 
     // Assert
-    let saved = sqlx::query!("SELECT email, name from subscriptions",)
-        .fetch_one(&mut db)
+    let _saved = sqlx::query!("SELECT email, name from subscriptions",)
+        .fetch_one(&app.db)
         .await
         .expect("cannot get a saved subscription");
 
@@ -30,7 +29,7 @@ async fn subscribe_returns_a_200_for_valid_form_data() {
 #[tokio::test]
 async fn subscribe_returns_a_400_when_invalid_form_data() {
     // Arrange
-    let addr = common::spawn_app();
+    let app = common::spawn_app().await;
     let client = reqwest::Client::new();
     let test_cases = vec![
         ("name=le%20guin", "missing the email"),
@@ -40,7 +39,7 @@ async fn subscribe_returns_a_400_when_invalid_form_data() {
 
     // Act
     for (invalid_body, error_message) in test_cases {
-        let url = format!("{}/subscriptions", addr);
+        let url = format!("{}/subscriptions", &app.address);
         let response = client
             .post(&url)
             .header("Content-Type", "application/x-www-form-urlencoded")

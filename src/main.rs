@@ -1,16 +1,21 @@
 use std::net::TcpListener;
 
-use mailcannon::{get_configuration, make_server};
+use mailcannon::{get_configuration, get_database, make_server};
 
+#[snafu::report]
 #[tokio::main]
 async fn main() -> Result<(), std::io::Error> {
-    let config = get_configuration().expect("failed to read configuration");
+    let settings = get_configuration().expect("failed to read configuration");
 
-    let address = format!("127.0.0.1:{}", config.application_port);
+    let db = get_database(&settings)
+        .await
+        .expect("failed to connect to Postgres");
+
+    let address = format!("127.0.0.1:{}", settings.application_port);
 
     let listener = TcpListener::bind(&address)?;
 
     println!("listening at address {}", &address);
 
-    make_server(listener)?.await
+    make_server(listener, db)?.await
 }

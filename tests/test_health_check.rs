@@ -2,10 +2,10 @@ pub mod common;
 
 #[tokio::test]
 async fn health_check_works() {
-    let url = common::spawn_app();
+    let test_app = common::spawn_app().await;
     let client = reqwest::Client::new();
 
-    let url = format!("{}/health_check", url);
+    let url = format!("{}/health_check", &test_app.address);
 
     let response = client
         .get(&url)
