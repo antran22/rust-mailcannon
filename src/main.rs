@@ -1,10 +1,16 @@
 use std::net::TcpListener;
 
-use mailcannon::{get_configuration, get_database, make_server};
+use mailcannon::{get_configuration, get_database, make_server, telemetry};
 
 #[snafu::report]
 #[tokio::main]
 async fn main() -> Result<(), std::io::Error> {
+    let subscriber =
+        telemetry::make_tracing_subscriber("mailcannon".into(), "info".into(), std::io::stdout);
+    telemetry::init_subscriber(subscriber);
+
+    tracing::info!("starting the app");
+
     let settings = get_configuration().expect("failed to read configuration");
 
     let db = get_database(&settings)
@@ -15,7 +21,7 @@ async fn main() -> Result<(), std::io::Error> {
 
     let listener = TcpListener::bind(&address)?;
 
-    println!("listening at address {}", &address);
+    tracing::info!("listening at address {}", &address);
 
     make_server(listener, db)?.await
 }

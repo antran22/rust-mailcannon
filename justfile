@@ -50,3 +50,12 @@ _db-schema-update-code:
 
 _db-schema-update-test:
   cargo sqlx prepare -- --tests
+
+
+# Linting
+
+lint:
+  cargo clippy
+
+unused-deps:
+ ::{init_subscriber, make_tracing_subscriber}, cargo +nightly udeps

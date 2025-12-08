@@ -1,4 +1,4 @@
-use actix_web::{App, HttpServer, dev::Server, web};
+use actix_web::{App, HttpServer, dev::Server, middleware::Logger, web};
 use sqlx::PgPool;
 use std::net::TcpListener;
 
@@ -9,6 +9,7 @@ pub fn make_server(listener: TcpListener, connection: PgPool) -> Result<Server, 
 
     let server = HttpServer::new(move || {
         App::new()
+            .wrap(Logger::default())
             .route("/health_check", web::get().to(routes::healthcheck::check))
             .route(
                 "/subscriptions",

@@ -13,6 +13,13 @@ uuid = { version = "^1", features = ["v4"] }
 chrono = { version = "0.4.22", default-features = false, features = ["clock"] }
 url = "2.5.7"
 snafu = { version = "0.8.9", features = ["alloc"] }
+log = "0.4.29"
+env_logger = "0.11.8"
+tracing = { version = "0.1", features = ["log"] }
+tracing-bunyan-formatter = "0.3"
+tracing-subscriber = { version = "0.3.22", features = ["env-filter", "registry"] }
+tracing-log = "0.2.0"
+once_cell = "1"
 
 [dependencies.sqlx]
 version = "0.7"

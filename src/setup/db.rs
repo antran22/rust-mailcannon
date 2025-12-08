@@ -19,7 +19,7 @@ pub enum DatabaseConnectionError {
 pub async fn get_database(settings: &Settings) -> Result<PgPool, DatabaseConnectionError> {
     let addr = settings
         .database
-        .connection_string()
+        .connection_string_with_db()
         .context(ConnectionStringSnafu {})?;
 
     PgPool::connect(&addr).await.context(ConnectionSnafu {})
