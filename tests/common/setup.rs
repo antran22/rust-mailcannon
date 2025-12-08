@@ -2,6 +2,7 @@ use std::net::TcpListener;
 
 use mailcannon::{Settings, telemetry};
 use once_cell::sync::Lazy;
+use secrecy::ExposeSecret;
 use sqlx::{Connection, Executor, PgConnection, PgPool};
 use uuid::Uuid;
 
@@ -37,6 +38,7 @@ pub async fn spawn_app() -> TestApp {
 
     let server = mailcannon::make_server(listener, db.clone()).expect("Failed to bind address");
 
+    #[allow(clippy::let_underscore_future)]
     let _ = tokio::spawn(server);
 
     TestApp {
@@ -53,14 +55,13 @@ fn get_configuration() -> Settings {
 
 async fn configure_database(config: Settings) -> PgPool {
     let db_config = &config.database;
-    dbg!(db_config);
     let addr = db_config
         .connection_string()
         .expect("must get connection string");
 
-    dbg!(&addr);
+    let addr = addr.expose_secret();
 
-    let mut db = PgConnection::connect(&addr)
+    let mut db = PgConnection::connect(addr)
         .await
         .expect("failed to connect to Postgres.");
 
@@ -72,7 +73,9 @@ async fn configure_database(config: Settings) -> PgPool {
         .connection_string_with_db()
         .expect("must get connection string");
 
-    let connection_pool = PgPool::connect(&addr)
+    let addr = addr.expose_secret();
+
+    let connection_pool = PgPool::connect(addr)
         .await
         .expect("failed to connect to Postgres");
 

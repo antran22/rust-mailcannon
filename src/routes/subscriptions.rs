@@ -1,7 +1,6 @@
 use actix_web::{HttpResponse, Responder, web};
 use chrono::Utc;
 use sqlx::PgPool;
-use tracing::Instrument;
 use uuid::Uuid;
 
 #[derive(serde::Deserialize)]
@@ -10,22 +9,35 @@ pub struct CreateSubscriptionData {
     email: String,
 }
 
+#[tracing::instrument(
+    name = "adding a new subscriber",
+    skip(form, connection),
+    fields(
+        subscriber_email=%form.email,
+        subscriber_name=%form.name
+    )
+)]
 pub async fn create(
     form: web::Form<CreateSubscriptionData>,
     connection: web::Data<PgPool>,
 ) -> impl Responder {
-    let request_id = Uuid::new_v4();
-    let request_span = tracing::info_span!(
-        "adding new subscriber",
-        %request_id,
-        subscriber_email = %form.email,
-        subscriber_name = %form.name
-    );
+    let result = insert_subscription(&form, &connection).await;
 
-    let _span_guard = request_span.enter();
+    match result {
+        Ok(_) => HttpResponse::Ok().body("subscription created"),
+        Err(_) => HttpResponse::InternalServerError().finish(),
+    }
+}
 
-    let query_span = tracing::info_span!("saving susbcriber detail");
-    match sqlx::query!(
+#[tracing::instrument(
+    name = "Saving new subscriber details in the database",
+    skip(form, connection)
+)]
+async fn insert_subscription(
+    form: &CreateSubscriptionData,
+    connection: &PgPool,
+) -> Result<(), sqlx::Error> {
+    sqlx::query!(
         r#"
         INSERT INTO subscriptions (id, email, name, subscribed_at) VALUES ($1, $2, $3, $4)
         "#,
@@ -34,17 +46,12 @@ pub async fn create(
         form.name,
         Utc::now()
     )
-    .execute(connection.get_ref())
-    .instrument(query_span)
+    .execute(connection)
     .await
-    {
-        Ok(_) => {
-            tracing::info!("saved new subscriber details");
-            HttpResponse::Ok().body("subscription created")
-        }
-        Err(e) => {
-            tracing::error!("error saving new subscriber details {:?}", e);
-            HttpResponse::InternalServerError().finish()
-        }
-    }
+    .map_err(|e| {
+        tracing::error!("query failed {:?}", e);
+        e
+    })?;
+
+    Ok(())
 }

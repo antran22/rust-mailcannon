@@ -25,6 +25,9 @@ test-watch:
 test-coverage:
   cargo tarpaulin --verbose --workspace 
 
+test-log:
+  TEST_LOG=true cargo test | bunyan
+
 dev-dep-start:
   docker compose -f docker-compose.dev.yml up -d
 

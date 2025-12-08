@@ -1,3 +1,5 @@
+use secrecy::ExposeSecret;
+use secrecy::SecretString;
 use snafu::Snafu;
 use snafu::prelude::*;
 
@@ -16,7 +18,7 @@ pub struct Settings {
 pub struct DatabaseSettings {
     #[serde(rename = "user")]
     pub username: String,
-    pub password: String,
+    pub password: SecretString,
     #[serde(default = "default_db_port")]
     pub port: u16,
     #[serde(default = "default_host")]
@@ -53,12 +55,14 @@ pub enum DbCredentialError {
 }
 
 impl DatabaseSettings {
-    pub fn connection_string(&self) -> Result<String, DbCredentialError> {
-        self.connection_url().map(|url| url.to_string())
+    pub fn connection_string(&self) -> Result<SecretString, DbCredentialError> {
+        self.connection_url()
+            .map(|url| SecretString::new(url.to_string().into()))
     }
 
-    pub fn connection_string_with_db(&self) -> Result<String, DbCredentialError> {
-        self.connection_url_with_db().map(|url| url.to_string())
+    pub fn connection_string_with_db(&self) -> Result<SecretString, DbCredentialError> {
+        self.connection_url_with_db()
+            .map(|url| SecretString::new(url.to_string().into()))
     }
 
     fn connection_url(&self) -> Result<Url, DbCredentialError> {
@@ -70,7 +74,7 @@ impl DatabaseSettings {
             .map_err(|()| DbCredentialError::OtherField {
                 message: "failed setting username".to_string(),
             })?;
-        url.set_password(Some(&self.password))
+        url.set_password(Some(self.password.expose_secret()))
             .map_err(|()| DbCredentialError::OtherField {
                 message: "failed setting password".to_string(),
             })?;
@@ -109,16 +113,17 @@ mod tests {
     #[test]
     fn test_connection_string() {
         let db_settings = DatabaseSettings {
-            username: "user".to_string(),
-            password: "password".to_string(),
+            username: "user".into(),
+            password: "password".into(),
             port: 5432,
-            host: "postgres.com".to_string(),
-            database_name: "random_db".to_string(),
+            host: "postgres.com".into(),
+            database_name: "random_db".into(),
         };
 
         let connection_string = db_settings
             .connection_string()
             .expect("must build connection string successfully");
+        let connection_string = connection_string.expose_secret();
 
         assert_eq!(
             connection_string,
@@ -129,6 +134,8 @@ mod tests {
             .connection_string_with_db()
             .expect("must build connection string successfully");
 
+        let connection_string = connection_string.expose_secret();
+
         assert_eq!(
             connection_string,
             "postgres://user:password@postgres.com:5432/random_db"
@@ -138,16 +145,18 @@ mod tests {
     #[test]
     fn test_connection_string_urlencode() {
         let db_settings = DatabaseSettings {
-            username: "user".to_string(),
-            password: "123#@:456".to_string(),
+            username: "user".into(),
+            password: "123#@:456".into(),
             port: 5432,
-            host: "postgres.com".to_string(),
-            database_name: "random_db".to_string(),
+            host: "postgres.com".into(),
+            database_name: "random_db".into(),
         };
 
         let connection_string = db_settings
             .connection_string()
             .expect("must build connection string successfully");
+
+        let connection_string = connection_string.expose_secret();
 
         assert_eq!(
             connection_string,
@@ -157,6 +166,8 @@ mod tests {
         let connection_string = db_settings
             .connection_string_with_db()
             .expect("must build connection string successfully");
+
+        let connection_string = connection_string.expose_secret();
 
         assert_eq!(
             connection_string,
@@ -168,11 +179,11 @@ mod tests {
     #[should_panic]
     fn test_invalid_host() {
         let db_settings = DatabaseSettings {
-            username: "user".to_string(),
-            password: "123#@:456".to_string(),
+            username: "user".into(),
+            password: "123#@:456".into(),
             port: 5432,
-            host: "".to_string(),
-            database_name: "random_db".to_string(),
+            host: "".into(),
+            database_name: "random_db".into(),
         };
 
         let value = db_settings.connection_string().unwrap();

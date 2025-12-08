@@ -1,3 +1,4 @@
+use secrecy::ExposeSecret;
 use snafu::Snafu;
 use snafu::prelude::*;
 use sqlx::Error;
@@ -22,5 +23,7 @@ pub async fn get_database(settings: &Settings) -> Result<PgPool, DatabaseConnect
         .connection_string_with_db()
         .context(ConnectionStringSnafu {})?;
 
-    PgPool::connect(&addr).await.context(ConnectionSnafu {})
+    PgPool::connect(addr.expose_secret())
+        .await
+        .context(ConnectionSnafu {})
 }
