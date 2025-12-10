@@ -35,6 +35,9 @@ async fn subscribe_returns_a_400_when_invalid_form_data() {
         ("name=le%20guin", "missing the email"),
         ("email=ursula_le_guin%40gmail.com", "missing the name"),
         ("", "missing both name and email"),
+        ("name=&email=ursula_le_guin%40gmail.com", "empty name"),
+        ("name=Ursula&email=", "empty email"),
+        ("name=Ursula&email=definitely-not-an-email", "invalid email"),
     ];
 
     // Act

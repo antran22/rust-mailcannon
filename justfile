@@ -8,6 +8,7 @@ postgres_port := env("POSTGRES_PORT")
 postgres_db := env("POSTGRES_DB")
   
 export DATABASE_URL := "postgres://" + postgres_user + ":" + postgres_password + "@" + postgres_host + ":" + postgres_port + "/" + postgres_db
+export SQLX_OFFLINE := "true"
 
 
 start:

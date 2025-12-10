@@ -3,6 +3,8 @@ use chrono::Utc;
 use sqlx::PgPool;
 use uuid::Uuid;
 
+use crate::domain::{self, NewSubscriber};
+
 #[derive(serde::Deserialize)]
 pub struct CreateSubscriptionData {
     name: String,
@@ -20,21 +22,28 @@ pub struct CreateSubscriptionData {
 pub async fn create(
     form: web::Form<CreateSubscriptionData>,
     connection: web::Data<PgPool>,
-) -> impl Responder {
-    let result = insert_subscription(&form, &connection).await;
+) -> actix_web::Result<impl Responder> {
+    let subscriber_name =
+        domain::SubscriberName::parse(form.0.name).map_err(actix_web::error::ErrorBadRequest)?;
 
-    match result {
-        Ok(_) => HttpResponse::Ok().body("subscription created"),
-        Err(_) => HttpResponse::InternalServerError().finish(),
-    }
+    let new_subscriber = NewSubscriber {
+        email: form.0.email,
+        name: subscriber_name,
+    };
+
+    let result = insert_subscription(&new_subscriber, &connection).await;
+
+    result
+        .map(|_| HttpResponse::Ok().body("subscription created"))
+        .map_err(|_| actix_web::error::ErrorInternalServerError("query error"))
 }
 
 #[tracing::instrument(
     name = "Saving new subscriber details in the database",
-    skip(form, connection)
+    skip(new_subscriber, connection)
 )]
 async fn insert_subscription(
-    form: &CreateSubscriptionData,
+    new_subscriber: &NewSubscriber,
     connection: &PgPool,
 ) -> Result<(), sqlx::Error> {
     sqlx::query!(
@@ -42,8 +51,8 @@ async fn insert_subscription(
         INSERT INTO subscriptions (id, email, name, subscribed_at) VALUES ($1, $2, $3, $4)
         "#,
         Uuid::new_v4(),
-        form.email,
-        form.name,
+        new_subscriber.email,
+        new_subscriber.name.as_ref(),
         Utc::now()
     )
     .execute(connection)
