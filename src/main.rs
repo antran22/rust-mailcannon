@@ -17,11 +17,11 @@ async fn main() -> Result<(), std::io::Error> {
         .await
         .expect("failed to connect to Postgres");
 
-    let address = format!("127.0.0.1:{}", settings.application_port);
+    let address = &settings.listen_addr;
 
-    let listener = TcpListener::bind(&address)?;
+    let listener = TcpListener::bind(address)?;
 
-    tracing::info!("listening at address {}", &address);
+    tracing::info!("listening at address: {}", address);
 
     make_server(listener, db)?.await
 }

@@ -1,0 +1,26 @@
+services:
+  database:
+    image: "postgres:latest"
+    environment:
+      - POSTGRES_USER=admin
+      - POSTGRES_PASSWORD=password
+      - POSTGRES_DB=app
+      - POSTGRES_PORT=5432
+    volumes:
+      - data:/var/lib/postgresql
+
+  server:
+    build: .
+    image: mailcannon
+    environment:
+      - POSTGRES_USER=admin
+      - POSTGRES_PASSWORD=password
+      - POSTGRES_HOST=postgres
+      - POSTGRES_DB=app
+      - POSTGRES_PORT=5432
+      - LISTEN=0.0.0.0:8080
+    ports:
+      - 8080:8080
+
+volumes:
+  data:

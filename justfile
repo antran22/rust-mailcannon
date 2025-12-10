@@ -46,12 +46,8 @@ create-db:
 migration +args:
   sqlx migrate {{args}}
 
-db-schema-update: _db-schema-update-code _db-schema-update-test
-
-_db-schema-update-code:
+db-schema-update: 
   cargo sqlx prepare
-
-_db-schema-update-test:
   cargo sqlx prepare -- --tests
 
 

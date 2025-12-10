@@ -10,8 +10,8 @@ use url::Url;
 pub struct Settings {
     #[serde(rename = "postgres")]
     pub database: DatabaseSettings,
-    #[serde(default = "default_app_port")]
-    pub application_port: u16,
+    #[serde(default = "default_listen_addr", rename = "listen")]
+    pub listen_addr: String,
 }
 
 #[derive(serde::Deserialize, Debug)]
@@ -21,18 +21,18 @@ pub struct DatabaseSettings {
     pub password: SecretString,
     #[serde(default = "default_db_port")]
     pub port: u16,
-    #[serde(default = "default_host")]
+    #[serde(default = "default_db_host")]
     pub host: String,
     #[serde(rename = "db")]
     pub database_name: String,
 }
 
-fn default_host() -> String {
+fn default_db_host() -> String {
     "127.0.0.1".to_owned()
 }
 
-fn default_app_port() -> u16 {
-    8080
+fn default_listen_addr() -> String {
+    "127.0.0.1:8080".to_owned()
 }
 
 fn default_db_port() -> u16 {

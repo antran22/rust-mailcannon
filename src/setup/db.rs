@@ -23,7 +23,5 @@ pub async fn get_database(settings: &Settings) -> Result<PgPool, DatabaseConnect
         .connection_string_with_db()
         .context(ConnectionStringSnafu {})?;
 
-    PgPool::connect(addr.expose_secret())
-        .await
-        .context(ConnectionSnafu {})
+    PgPool::connect_lazy(addr.expose_secret()).context(ConnectionSnafu {})
 }
